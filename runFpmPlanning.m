@@ -2,7 +2,7 @@ function runFpmPlanning()
 
 r = GliderForcePlant();
 
-N = 21;
+N = 41;
 minimum_duration = .1;
 maximum_duration = 4;
 prog = DircolTrajectoryOptimization(r,N,[minimum_duration maximum_duration]);  
@@ -30,7 +30,11 @@ for i=1:N
   prog = prog.addConstraint(QuadraticConstraint(-Inf,0,Q,b));
 end
 
-% 2 - forces must be smooth = derivative of u must be < epsilon
+% 2 - forces must be smooth = |derivative| of u must be < epsilon
+epsilon = 1;
+lb = -epsilon*ones(4*(N-1),1);
+ub = epsilon*ones(4*(N-1),1);
+prog = prog.addConstraint(FunctionHandleConstraint(lb,ub,1:prog.num_vars,@(x)fodConstraint(x,h_inds,u_inds)));
 
 % 3 - magnitudes must in a certain range
 
@@ -64,6 +68,17 @@ if (info==1)
   plot(tsamples,E);
 end
 
+end
+
+function d = fofed(x,h_inds,elem_inds)
+  N = size(elem_inds,2);
+  m = size(elem_inds,1);
+  c = zeros(m*(N-1),1);
+  for i=1:N-1
+    for j=1:m
+      c(m*(i-1)+j) = (x(elem_inds(j,i))-x(elem_inds(j,i+1)))/x(h_inds(i));
+    end
+  end
 end
 
 function [g,dg] = cost(dt,x,u)
