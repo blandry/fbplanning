@@ -1,0 +1,4 @@
+BOT_VIEWER_PRETTIER: 0
+Using X Visual 0x20
+loading new robot with 3 links
+GLM: Fatal Error: glmReadOBJ() failed: can't open data file "/home/blandry/code/drake-distro/drake/fbplanning/meshes/GliderFuselage.obj".
