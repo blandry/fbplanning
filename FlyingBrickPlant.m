@@ -9,8 +9,11 @@ classdef FlyingBrickPlant < DrakeSystem
     end
     
     methods
-      function obj = FlyingBrickPlant(manip)
+      function obj = FlyingBrickPlant(manip,q0)
         % manip should be a RigidBodyManipulator
+        if (nargin<2)
+          q0 = zeros(getNumPositions(manip),1);
+        end
         
         obj = obj@DrakeSystem(12,0,3*numel(manip.force),12);
         
@@ -23,11 +26,18 @@ classdef FlyingBrickPlant < DrakeSystem
         obj.m = getMass(manip);
         % should compute the equivalent inertia from each body
         obj.I = manip.body(2).inertia;
-        % should compute the center of pressure from Twan's code
+        % should probably use the center of pressure from Twan's code
         obj.Fpos = zeros(3,numel(manip.force));
+        kinsol = doKinematics(manip,q0);
         for i=1:numel(manip.force)
-          frame = getFrame(manip,manip.force{i}.kinframe);
-          obj.Fpos(:,i) =  frame.T(1:3,4);
+          force_element = manip.force{i};
+          if isprop(force_element,'child_body')
+            body_ind = force_element.child_body;
+          else
+            body_frame = getFrame(manip,force_element.kinframe);
+            body_ind = body_frame.body_ind;
+          end
+          obj.Fpos(:,i) =  forwardKin(manip,kinsol,body_ind,zeros(3,1));
         end
       end
     

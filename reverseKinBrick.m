@@ -1,46 +1,41 @@
-function xtraj = reverseKinBrick(p,bricktraj,forcetraj)
-
-t = bricktraj.getBreaks();
-N = numel(t);
-bx = bricktraj.eval(t);
-fx = forcetraj.eval(t);
-
-prog = NonlinearProgram(getNumStates(p)*N);
-
+function xx = reverseKinBrick(p,brickpos,forces)
 % objective is to match the forces at each state
-prog = prog.addCost(FunctionHandleConstraint(-Inf,Inf,prog.num_vars,@(x)cost(x,p,fx),0));
 
-% use the brick traj for a partial initial guess
-x0 = zeros(getNumStates(p),N);
-x0(1:6,:) = bx(1:6,:);
-x0(getNumStates(p)/2+[1:6],:) = bx(7:12,:);
-x0 = reshape(x0,[],1);
+% Should take some constraints no the states of the actuators
 
-[x,~,exitflag] = prog.solve(x0);
-
-x = reshape(x,getNumStates(p),[]);
-xtraj = PPTrajectory(spline(t,x));
+N = size(brickpos,2);
+xx = zeros(getNumStates(p),N);
+display('Running reverse kin opt...');
+for j=1:N
+  numvars = getNumStates(p)-12;
+  w = warning('off','optim:fminunc:SwitchingMethod');
+  extra_states = fminunc(@(x)forcedif(x,p,brickpos(:,j),forces(:,j)),zeros(numvars,1),struct('Display','off'));
+  warning(w);
+  xx(:,j) = [brickpos(1:6,j);extra_states(1:numel(extra_states)/2);brickpos(7:12,j);extra_states(numel(extra_states)/2+1:end)];
+end
 
 end
 
-function g = cost(xvar,p,fx)
-  w = warning('off','Drake:TaylorVar:DoubleConversion');
-  x = double(reshape(xvar,getNumStates(p),[]));
-  warning(w);
-  q = x(1:getNumStates(p)/2,:);
-  qd = x(getNumStates(p)/2+1:end,:);
-  N = size(x,2);
-  
-  df = zeros(3*numel(p.force),N);
-  for i=1:N
-    for j=1:numel(p.force)
-       rbf = p.force{j};
-       frame = getFrame(p,rbf.kinframe);
-       wrench = rbf.computeSpatialForce(p,q(:,i),qd(:,i));
-       df(3*(j-1)+1:3*j,i) = wrench(1:3,frame.body_ind); % should be handled more carefully
+function df = forcedif(x,p,brick,force)
+  q = [brick(1:6);x(1:numel(x)/2)];
+  qd = [brick(7:12);x(numel(x)/2+1:end)];
+  kinsol = doKinematics(p,q);
+  force_ext = zeros(size(force));
+  for i=1:numel(p.force)
+    force_element = p.force{i};
+    if isprop(force_element,'child_body')
+      body_ind = force_element.child_body;
+    else
+      body_frame = getFrame(p,force_element.kinframe);
+      body_ind = body_frame.body_ind;
     end
+    f_ext = computeSpatialForce(force_element,p,q,qd);
+    joint_wrench = f_ext(:,body_ind);
+    body_wrench = inv(p.body(body_ind).X_joint_to_body)'*joint_wrench;
+    pos = forwardKin(p,kinsol,body_ind,[zeros(3,1),body_wrench(1:3),body_wrench(4:6)]);
+    point = pos(:,1);
+    % torque_ext = pos(:,2)-point;
+    force_ext(3*(i-1)+1:3*(i-1)+3) = pos(:,3)-point;
   end
-  df = reshape(df,[],1);
-  
-  g = (df-reshape(fx,[],1))'*(df-reshape(fx,[],1));
+  df = (force_ext-force)'*(force_ext-force);
 end
