@@ -22,7 +22,8 @@ options.xfub = [0 0 0 0 -pi/3 0 pi/2 Inf 0 Inf 0 Inf 0 Inf]';
 % sanity check of the brick plan
 breaks = bricktraj.getBreaks();
 xx = bricktraj.eval(breaks);
-xtraj = PPTrajectory(spline(breaks,[xx(1:6,:);zeros(1,numel(breaks));xx(7:12,:);zeros(1,numel(breaks))]));
+extra_states = getNumStates(p)-12;
+xtraj = PPTrajectory(spline(breaks,[xx(1:6,:);zeros(extra_states/2,numel(breaks));xx(7:12,:);zeros(extra_states/2,numel(breaks))]));
 xtraj = setOutputFrame(xtraj,getStateFrame(p));
 v = p.constructVisualizer();
 drawForceTraj(p,xtraj,forcetraj);

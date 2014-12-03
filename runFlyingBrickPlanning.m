@@ -19,8 +19,25 @@ prog = prog.addStateConstraint(BoundingBoxConstraint(xlb,xub),1:N);
 prog = prog.addStateConstraint(BoundingBoxConstraint(xflb,xfub),N);
 
 % CONSTRAINTS ON THE FORCES
-% TODO!!!
-% 1 - passive elements = wings can only remove energy
+% 1 - passive elements = wings of a glider can only remove energy
+P = zeros(6,3*size(r.Fpos,2));
+for i=1:size(r.Fpos,2)
+  Pi = [0 -r.Fpos(3,i) r.Fpos(2,i); r.Fpos(3,i) 0 -r.Fpos(1,i); -r.Fpos(2,i) r.Fpos(1,i) 0];
+  P(:,3*(i-1)+1:3*(i-1)+3) = [eye(3);Pi];
+end
+for j=1:N
+  Q = sparse(prog.num_vars,prog.num_vars);
+  qd_inds = prog.x_inds(7:12,j);
+  fext_inds = prog.u_inds(:,j);
+  Q(qd_inds,fext_inds) = P;
+  Q = Q'+Q;
+  vel_inds = prog.x_inds(7:9,j);
+  b = sparse(prog.num_vars,1);
+  b(vel_inds) = r.m*r.g;
+  prog = prog.addConstraint(QuadraticConstraint(-Inf,0,Q,b));
+end
+
+% TODO - FIND MORE!!!
 % 2 - forces must be smooth = |derivative| of u must be < epsilon
 % 3 - magnitudes must in a certain range
 
