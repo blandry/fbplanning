@@ -5,14 +5,18 @@ r = FlyingBrickPlant(p);
 N = options.N;
 minimum_duration = options.minimum_duration;
 maximum_duration = options.maximum_duration;
-
 prog = DircolTrajectoryOptimization(r,N,[minimum_duration maximum_duration]);
 
-num_states = numel(options.x0);
-x0 = options.x0; x0 = [x0(1:6);x0(num_states/2+[1:6])];
-xf = options.xf; xf = [xf(1:6);xf(num_states/2+[1:6])];
-prog = prog.addStateConstraint(ConstantConstraint(double(x0)),1);
-prog = prog.addStateConstraint(ConstantConstraint(double(xf)),N);
+num_states = numel(options.x0lb);
+x0lb = options.x0lb; x0lb = [x0lb(1:6);x0lb(num_states/2+[1:6])];
+x0ub = options.x0ub; x0ub = [x0ub(1:6);x0ub(num_states/2+[1:6])];
+xlb = options.xlb; xlb = [xlb(1:6);xlb(num_states/2+[1:6])];
+xub = options.xub; xub = [xub(1:6);xub(num_states/2+[1:6])];
+xflb = options.xflb; xflb = [xflb(1:6);xflb(num_states/2+[1:6])];
+xfub = options.xfub; xfub = [xfub(1:6);xfub(num_states/2+[1:6])];
+prog = prog.addStateConstraint(BoundingBoxConstraint(options.x0lb,options.x0ub),1);
+prog = prog.addStateConstraint(BoundingBoxConstraint(options.xlb,options.xub),1:N);
+prog = prog.addStateConstraint(BoundingBoxConstraint(options.xflb,options.xfub),N);
 
 % CONSTRAINTS ON THE FORCES
 % TODO!!!

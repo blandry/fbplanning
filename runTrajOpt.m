@@ -8,9 +8,9 @@ prog = prog.addStateConstraint(BoundingBoxConstraint(options.x0lb,options.x0ub),
 prog = prog.addStateConstraint(BoundingBoxConstraint(options.xlb,options.xub),1:N);
 prog = prog.addStateConstraint(BoundingBoxConstraint(options.xflb,options.xfub),N);
 
-%prog = prog.addRunningCost(@cost);
-%prog = prog.addFinalCost(@finalCost);
-prog = prog.addTrajectoryDisplayFunction(@plotDircolTraj);
+prog = prog.addRunningCost(@cost);
+prog = prog.addFinalCost(@finalCost);
+prog = prog.addTrajectoryDisplayFunction(@(t,x,u)plotDircolTraj(t,x,u,options.xlb(1),options.xub(1),options.xlb(3),options.xub(3)));
 
 if (isfield(options,'xtraj0')&&isfield(options,'utraj0'))
   tf0 = options.xtraj0.tspan(2);
@@ -20,13 +20,12 @@ else
   tf0 = .5*(options.minimum_duration+options.maximum_duration);
   traj_init0.x = PPTrajectory(foh([0,tf0],[options.x0lb,options.xflb]));
   traj_init0.u = ConstantTrajectory(zeros(getNumInputs(p),1));
-  % traj_init0 = struct();
 end
 
 display('Running full body traj opt...');
-for i=1:1
+for i=1:5
   tic
-  [xtraj,utraj,z,F,info,infeasible_constraint_name] = prog.solveTraj(tf0,traj_init0);
+  [xtraj,utraj,~,~,info] = prog.solveTraj(tf0,traj_init0);
   toc
   if info==1, break; end
 end
@@ -43,19 +42,18 @@ function [g,dg] = cost(dt,x,u)
 end
 
 function [h,dh] = finalCost(t,x)
-  h = t;
+  h = 100*t;
   if (nargout>1)
-    dh = [1,zeros(1,numel(x))];
+    dh = [100,zeros(1,numel(x))];
   end
 end
 
-function plotDircolTraj(t,x,u)
+function plotDircolTraj(t,x,u,xmin,xmax,zmin,zmax)
   figure(1)
   clf;
   hold on
   plot(x(1,:),x(3,:),'.-');
   hold off
-  axis([-15 15 -15 15]);
+  axis([xmin xmax zmin zmax]);
   drawnow;
-  %delete(h);
 end
