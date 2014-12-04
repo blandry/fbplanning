@@ -29,6 +29,17 @@ v = p.constructVisualizer();
 drawForceTraj(p,xtraj,forcetraj);
 v.playback(xtraj,struct('slider',true));
 
+% verify that the energy decreases
+E = zeros(1,options.N);
+R = [getMass(p)*eye(3) zeros(3); zeros(3) p.body(2).inertia];
+for i=1:options.N
+  qd = [xx(7:9,i);rpydot2angularvel(xx(4:6,i),xx(10:12,i))];
+  E(i) = 0.5*qd'*R*qd - [p.gravity;zeros(3,1)]'*R*qd;
+end
+figure(25);
+plot(1:options.N,E);
+title('Energy of the glider over time');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

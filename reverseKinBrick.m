@@ -1,7 +1,7 @@
 function xx = reverseKinBrick(p,brickpos,forces)
 % objective is to match the forces at each state
 
-% Should take some constraints no the states of the actuators
+% TODO: take some constraints on the states of the actuators
 
 N = size(brickpos,2);
 xx = zeros(getNumStates(p),N);
