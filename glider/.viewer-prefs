@@ -4,7 +4,7 @@ Grid=true
 LCM GL=true
 
 [__libviewer_show_renderers]
-Grid=false
+Grid=true
 LCM GL=false
 
 [__libviewer_bookmarks]
@@ -16,7 +16,7 @@ bookmark_4=0;0;0;0;0;0;0;0;0;0;0;
 bookmark_5=0;0;0;0;0;0;0;0;0;0;0;
 
 [Grid]
-Ground=false
+Ground=true
 Automatic Spacing=true
 Rotation=0
 Light=true

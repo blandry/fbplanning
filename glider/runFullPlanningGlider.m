@@ -8,13 +8,13 @@ options.minimum_duration = .1;
 options.maximum_duration = 4;
 
 options.x0lb = [-10 0 .1 0 0 0 0 0 0 0 0 0 0 0]';
-options.x0ub = [-5 0 3 0 0 0 0 10 0 0 0 0 0 0]';
+options.x0ub = [-5 0 3 0 0 0 0 7 0 0 0 0 0 0]';
 
-options.xlb = [-15 0 -10 0 -pi 0 -pi/2 -Inf -Inf -Inf -Inf -Inf -Inf -Inf]';
-options.xub = [15 0 10 0 pi 0 pi/2 Inf Inf Inf Inf Inf Inf Inf]';
+options.xlb = [-15 0 -10 0 -pi/2 0 -pi/2 -10 0 -10 0 -100 0 -100]';
+options.xub = [15 0 10 0 pi/2 0 pi/2 10 0 100 0 10 0 100]';
 
-options.xflb = [0 0 0 0 -pi/2 0 -pi/2 -Inf 0 -Inf 0 -Inf 0 -Inf]';
-options.xfub = [0 0 0 0 -pi/3 0 pi/2 Inf 0 Inf 0 Inf 0 Inf]';
+options.xflb = [0 0 0 0 -pi/2 0 -pi/2 -10 0 -10 0 -100 0 -100]';
+options.xfub = [0 0 0 0 -pi/3 0 pi/2 10 0 10 0 100 0 100]';
 
 % 1- SOLVE FOR A TRAJECTORY USING A BRICK
 [bricktraj, forcetraj] = runFlyingBrickPlanning(p,options);
@@ -44,18 +44,18 @@ title('Energy of the glider over time');
 
 
 % % 2- SOLVE THE REVERSE KINEMATICS PROBLEM
-% t = bricktraj.getBreaks();
-% brickpos = bricktraj.eval(t);
-% forces = forcetraj.eval(t);
-% w = warning('off','Drake:TaylorVar:DoubleConversion');
-% xx = reverseKinBrick(p,brickpos,forces);
-% warning(w);
-% xtraj0 = PPTrajectory(spline(t,xx));
-% 
-% % sanity check of the reverse kin for the forces
-% xtraj0 = setOutputFrame(xtraj0,getStateFrame(p));
-% % v = p.constructVisualizer();
-% v.playback(xtraj0,struct('slider',true,'visualized_system',p));
+t = bricktraj.getBreaks();
+brickpos = bricktraj.eval(t);
+forces = forcetraj.eval(t);
+w = warning('off','Drake:TaylorVar:DoubleConversion');
+xx = reverseKinBrick(p,brickpos,forces);
+warning(w);
+xtraj0 = PPTrajectory(spline(t,xx));
+
+% sanity check of the reverse kin for the forces
+xtraj0 = setOutputFrame(xtraj0,getStateFrame(p));
+% v = p.constructVisualizer();
+v.playback(xtraj0,struct('slider',true,'visualized_system',p));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -46,6 +46,7 @@ for j=1:N
   Q(qd_inds,fext_inds) = P;
   Q = Q'+Q;
   b = sparse(prog.num_vars,1);
+  Q(prog.x_inds(7:9,j),prog.x_inds(7:9,j))=.1*eye(3);
   prog = prog.addConstraint(QuadraticConstraint(-Inf,0,Q,b));
 end
 
