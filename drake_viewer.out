@@ -1,4 +1,6 @@
 BOT_VIEWER_PRETTIER: 0
 Using X Visual 0x20
-loading new robot with 3 links
-GLM: Fatal Error: glmReadOBJ() failed: can't open data file "/home/blandry/code/finalproject/fbplanning/meshes/GliderFuselage.obj".
+loading new robot with 31 links
+Warning: Mesh /home/blandry/code/finalproject/drake-distro/drake/fbplanning/meshes/torso_texture.STL ignored because it does not have extension .obj (nor can I find a juxtaposed file with a .obj extension)
+Warning: Mesh /home/blandry/code/finalproject/drake-distro/drake/fbplanning/meshes/tail_texture.STL ignored because it does not have extension .obj (nor can I find a juxtaposed file with a .obj extension)
+successfully loaded model

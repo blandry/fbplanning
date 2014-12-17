@@ -9,7 +9,7 @@ display('Running reverse kin opt...');
 for j=1:N
   numvars = getNumStates(p)-12;
   w = warning('off','optim:fminunc:SwitchingMethod');
-  extra_states = fminunc(@(x)forcedif(x,p,brickpos(:,j),forces(:,j)),zeros(numvars,1),struct('Display','off'));
+  extra_states = fminunc(@(x)forcedif(x,p,brickpos(:,j),forces(:,j)),zeros(numvars,1),struct('Display','on'));
   warning(w);
   xx(:,j) = [brickpos(1:6,j);extra_states(1:numel(extra_states)/2);brickpos(7:12,j);extra_states(numel(extra_states)/2+1:end)];
 end

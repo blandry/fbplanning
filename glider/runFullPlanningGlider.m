@@ -7,13 +7,13 @@ options.N = 21;
 options.minimum_duration = .1;
 options.maximum_duration = 4;
 
-options.x0lb = [-10 0 .1 0 0 0 0 0 0 0 0 0 0 0]';
-options.x0ub = [-5 0 3 0 0 0 0 7 0 0 0 0 0 0]';
+options.x0lb = [-10 0 .1 0 0 0 0 .01 0 0 0 0 0 0]';
+options.x0ub = [-5 0 1.5 0 0 0 0 0.01 0 0 0 0 0 0]';
 
-options.xlb = [-15 0 -10 0 -pi/2 0 -pi/2 -10 0 -10 0 -100 0 -100]';
+options.xlb = [-15 0 -10 0 -pi/2 0 -pi/2 0.01 0 -10 0 -100 0 -100]';
 options.xub = [15 0 10 0 pi/2 0 pi/2 10 0 100 0 10 0 100]';
 
-options.xflb = [0 0 0 0 -pi/2 0 -pi/2 -10 0 -10 0 -100 0 -100]';
+options.xflb = [0 0 0 0 -pi/2 0 -pi/2 0.01 0 -10 0 -100 0 -100]';
 options.xfub = [0 0 0 0 -pi/3 0 pi/2 10 0 10 0 100 0 100]';
 
 % 1- SOLVE FOR A TRAJECTORY USING A BRICK
@@ -30,27 +30,33 @@ drawForceTraj(p,xtraj,forcetraj);
 v.playback(xtraj,struct('slider',true));
 
 % verify that the energy decreases
-E = zeros(1,options.N);
-R = [getMass(p)*eye(3) zeros(3); zeros(3) p.body(2).inertia];
-for i=1:options.N
-  qd = [xx(7:9,i);rpydot2angularvel(xx(4:6,i),xx(10:12,i))];
-  E(i) = 0.5*qd'*R*qd - [p.gravity;zeros(3,1)]'*R*qd;
-end
-figure(25);
-plot(1:options.N,E);
-title('Energy of the glider over time');
+% E = zeros(1,options.N);
+% R = [getMass(p)*eye(3) zeros(3); zeros(3) p.body(2).inertia];
+% for i=1:options.N
+%   q = xx(1:6,i);
+%   qd = [xx(7:9,i);rpydot2angularvel(xx(4:6,i),xx(10:12,i))];
+%   E(i) = 0.5*qd'*R*qd - [p.gravity;zeros(3,1)]'*R*q;
+% end
+% figure(25);
+% plot(breaks,E);
+% title('Energy of the Perching Glider Over Time')
+% xlabel('time (s)')
+% ylabel('energy (J)')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % % 2- SOLVE THE REVERSE KINEMATICS PROBLEM
-t = bricktraj.getBreaks();
-brickpos = bricktraj.eval(t);
-forces = forcetraj.eval(t);
 w = warning('off','Drake:TaylorVar:DoubleConversion');
-xx = reverseKinBrick(p,brickpos,forces);
+[xtraj0,utraj0] = reverseKinBrickTraj(p,bricktraj,forcetraj,options);
 warning(w);
-xtraj0 = PPTrajectory(spline(t,xx));
+% t = bricktraj.getBreaks();
+% brickpos = bricktraj.eval(t);
+% forces = forcetraj.eval(t);
+% w = warning('off','Drake:TaylorVar:DoubleConversion');
+% xx = reverseKinBrick(p,brickpos,forces);
+% warning(w);
+% xtraj0 = PPTrajectory(spline(t,xx));
 
 % sanity check of the reverse kin for the forces
 xtraj0 = setOutputFrame(xtraj0,getStateFrame(p));

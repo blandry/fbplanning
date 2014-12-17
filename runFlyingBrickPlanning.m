@@ -32,8 +32,8 @@ prog = prog.addStateConstraint(BoundingBoxConstraint(xlb,xub),1:N);
 prog = prog.addStateConstraint(BoundingBoxConstraint(xflb,xfub),N);
 
 % CONSTRAINTS ON THE FORCES
-% 1 - passive elements = wings can only remove energy (unless you are
-% flapping them...)
+
+% Gliding
 P = zeros(6,3*size(r.Fpos,2));
 for i=1:size(r.Fpos,2)
   Pi = [0 -r.Fpos(3,i) r.Fpos(2,i); r.Fpos(3,i) 0 -r.Fpos(1,i); -r.Fpos(2,i) r.Fpos(1,i) 0];
@@ -50,16 +50,27 @@ for j=1:N
   prog = prog.addConstraint(QuadraticConstraint(-Inf,0,Q,b));
 end
 
-% TODO - FIND MORE!!!
-% 2 - forces must be smooth = |derivative| of u must be < epsilon
-% 3 - magnitudes must in a certain range
+% Magnitude
+max_airspeed = xub(7);
+for i=1:numel(p.force)
+  force_element = p.force{i};
+  [~,max_C] = fmincon(@(aoa)forcemag(aoa,force_element.fCl,force_element.fCd),0,[1 -1]',[180 180]');
+  max_f_square = (-max_C*max_airspeed^2)^2;
+  Q = zeros(getNumInputs(r));
+  Q(3*(i-1)+1:3*i,3*(i-1)+1:3*i) = diag([2 2 2]);
+  prog = prog.addInputConstraint(QuadraticConstraint(0,max_f_square,Q,zeros(getNumInputs(r),1)),1:N);
+end
 
 prog = prog.addRunningCost(@cost);
 prog = prog.addFinalCost(@finalCost);
+% prog = prog.addTrajectoryDisplayFunction(@(t,x,u)plotDircolTraj(t,x,u,options.xlb(1),options.xub(1),options.xlb(3),options.xub(3)));
 
 tf0 = .5*(minimum_duration+maximum_duration);
 traj_init.x = ConstantTrajectory(zeros(getNumStates(r),1));
 traj_init.u = ConstantTrajectory(zeros(getNumInputs(r),1));
+
+prog = prog.setSolverOptions('snopt','superbasicslimit',prog.num_vars+1);
+prog = prog.setSolverOptions('snopt','majoriterationslimit',2000);
 
 display('Running flying brick traj opt...');
 info=0;
@@ -79,12 +90,28 @@ bricktraj = PPTrajectory(spline(bricktrajangular.getBreaks(),bb));
 end
 
 function [g,dg] = cost(dt,x,u)
-  R = eye(numel(u));
-  g = u'*R*u;
-  dg = [zeros(1,1+numel(x)),2*u'*R];
+  Q = diag([0 0 0 1 1 1 0 0 0 1 1 1]);
+  R = 10*eye(numel(u));
+  g = x'*Q*x + u'*R*u;
+  dg = [0,2*x'*Q,2*u'*R];
 end
 
 function [h,dh] = finalCost(t,x)
   h = 100*t;
   dh = [100,zeros(1,size(x,1))];
 end
+
+function c = forcemag(aoa,fCl,fCd)
+  c = -(fCl.eval(aoa)+fCd.eval(aoa));
+end
+
+function plotDircolTraj(t,x,u,xmin,xmax,zmin,zmax)
+  figure(1)
+  clf;
+  hold on
+  plot(x(1,:),x(3,:),'.-');
+  hold off
+  axis([xmin xmax zmin zmax]);
+  drawnow;
+end
+

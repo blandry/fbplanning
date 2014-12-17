@@ -1,0 +1,42 @@
+BOT_VIEWER_PRETTIER: 0
+Using X Visual 0x20
+loading new robot with 31 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+==== LCM Warning ===
+LCM detected that large packets are being received, but the kernel UDP
+receive buffer is very small.  The possibility of dropping packets due to
+insufficient buffer space is very high.
+
+For more information, visit:
+   http://lcm.googlecode.com/svn/www/reference/lcm/multicast.html
+
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
+loading new robot with 3 links
+successfully loaded model
