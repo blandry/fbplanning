@@ -6,16 +6,20 @@ function [xtraj,utraj] = reverseKinBrickTraj(p,bricktraj,forcetraj,options)
 N = options.N;
 minimum_duration = options.minimum_duration;
 maximum_duration = options.maximum_duration;
-prog = DircolTrajectoryOptimization(p,N,[minimum_duration maximum_duration]);
+prog = DirtranTrajectoryOptimization(p,N,[minimum_duration maximum_duration],struct('integration_method',2));
 
-%prog = prog.addStateConstraint(BoundingBoxConstraint(options.x0lb,options.x0ub),1);
-prog = prog.addStateConstraint(BoundingBoxConstraint(options.xlb,options.xub),1:N);
-%prog = prog.addStateConstraint(BoundingBoxConstraint(options.xflb,options.xfub),N);
+% prog = prog.addStateConstraint(BoundingBoxConstraint(options.xlb,options.xub),1:N);
 
 % parametrizing the forces with the x position (monotonically increasing)
 breaks = bricktraj.getBreaks();
 brickpos = bricktraj.eval(breaks);
 xforcetraj = PPTrajectory(spline(brickpos(1,:),forcetraj.eval(breaks)));
+prog = prog.addStateConstraint(BoundingBoxConstraint([brickpos(1,1)',-Inf*ones(1,getNumStates(p)-1)]',[brickpos(1,1)',Inf*ones(1,getNumStates(p)-1)]'),1);
+prog = prog.addStateConstraint(BoundingBoxConstraint([brickpos(1,end)',-Inf*ones(1,getNumStates(p)-1)]',[brickpos(1,end)',Inf*ones(1,getNumStates(p)-1)]'),N);
+
+Q = zeros(prog.num_vars);
+Q(prog.h_inds,prog.h_inds) = 2;
+prog = prog.addConstraint(QuadraticConstraint(0.0001,.6,Q,zeros(prog.num_vars,1)));
 
 prog = prog.addRunningCost(@(dt,x,u)cost(dt,x,u,p,xforcetraj));
 prog = prog.addFinalCost(@finalCost);
@@ -29,6 +33,8 @@ traj_init.u = ConstantTrajectory(zeros(getNumInputs(p),1));
 
 prog = prog.setSolverOptions('snopt','superbasicslimit',prog.num_vars+1);
 prog = prog.setSolverOptions('snopt','majoriterationslimit',2000);
+% prog = prog.setSolverOptions('snopt','iterationslimit',50000);
+% prog = prog.setSolverOptions('snopt','print','snopt.out');
 
 % prog = prog.setSolver('fmincon');
 prog = prog.setSolver('snopt');
@@ -62,10 +68,12 @@ function [g,dg] = cost(dt,x,u,p,xforcetraj)
   qd = x(numel(x)/2+1:end);
   [~,Cdes,~,~,dCdes] = p.manipulatorDynamicsGivenForces(q,qd,true,forces);
   [~,C,~,~,dC] = p.manipulatorDynamicsNoTorque(q,qd,true);
-  Q = diag([0 0 0 1 1 1 1 1 1 1 1 1 1 1]);
-  R = 0.1;
-  g = (C-Cdes)'*(C-Cdes) + x'*Q*x + u'*R*u;
-  dg = [0,2*(C-Cdes)'*(dC-dCdes)+2*x'*Q,2*u'*R];
+  %Q = 0*diag([0 0 0 1 1 1 1 1 1 1 1 1 1 1]);
+  %R = 0;
+  %g = (C-Cdes)'*(C-Cdes) + x'*Q*x + u'*R*u;
+  %dg = [0,2*(C-Cdes)'*(dC-dCdes)+2*x'*Q,2*u'*R];
+  g = (C-Cdes)'*(C-Cdes);
+  dg = [0,2*(C-Cdes)'*(dC-dCdes),zeros(1,numel(u))];
 end
 
 function [h,dh] = finalCost(t,x)

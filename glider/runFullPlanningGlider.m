@@ -47,16 +47,16 @@ v.playback(xtraj,struct('slider',true));
 
 
 % % 2- SOLVE THE REVERSE KINEMATICS PROBLEM
-w = warning('off','Drake:TaylorVar:DoubleConversion');
-[xtraj0,utraj0] = reverseKinBrickTraj(p,bricktraj,forcetraj,options);
-warning(w);
-% t = bricktraj.getBreaks();
-% brickpos = bricktraj.eval(t);
-% forces = forcetraj.eval(t);
 % w = warning('off','Drake:TaylorVar:DoubleConversion');
-% xx = reverseKinBrick(p,brickpos,forces);
+% [xtraj0,utraj0] = reverseKinBrickTraj(p,bricktraj,forcetraj,options);
 % warning(w);
-% xtraj0 = PPTrajectory(spline(t,xx));
+t = bricktraj.getBreaks();
+brickpos = bricktraj.eval(t);
+forces = forcetraj.eval(t);
+w = warning('off','Drake:TaylorVar:DoubleConversion');
+xx = reverseKinBrick(p,brickpos,forces);
+warning(w);
+xtraj0 = PPTrajectory(spline(t,xx));
 
 % sanity check of the reverse kin for the forces
 xtraj0 = setOutputFrame(xtraj0,getStateFrame(p));
@@ -67,12 +67,9 @@ v.playback(xtraj0,struct('slider',true,'visualized_system',p));
 
 
 % 3- SOLVE FULL TRAJECTORY USING THE PREVIOUS RESULTS AS SEED
-% options.xtraj0 = xtraj0;
-% [xtraj, utraj] = runTrajOpt(p,options);
+options.xtraj0 = xtraj0;
+[xtraj, utraj] = runTrajOpt(p,options);
 % 
 % % display the final trajectory
 % v = p.constructVisualizer();
 % v.playback(xtraj,struct('slider',true));
-
-% simulates the final trajectory
-% TODO
